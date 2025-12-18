@@ -141,11 +141,11 @@ def main():
     
     train_loader = DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True,
-        num_workers=4, pin_memory=True
+        num_workers=2, pin_memory=True  # Уменьшено для Colab
     )
     val_loader = DataLoader(
         val_dataset, batch_size=args.batch_size, shuffle=False,
-        num_workers=4, pin_memory=True
+        num_workers=2, pin_memory=True  # Уменьшено для Colab
     )
     
     # Модель

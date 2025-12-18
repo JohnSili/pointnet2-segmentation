@@ -200,21 +200,22 @@ class PointNet2Seg(nn.Module):
         self.num_points = num_points
         
         # Encoder (Set Abstraction Layers)
+        # sa1: вход 6 (xyz+rgb) + 3 (xyz_norm) = 9 каналов
         self.sa1 = PointNetSetAbstraction(
             npoint=1024, radius=0.1, nsample=32,
-            in_channel=6, mlp=[32, 32, 64]
+            in_channel=9, mlp=[32, 32, 64]  # 6 (points) + 3 (xyz_norm)
         )
         self.sa2 = PointNetSetAbstraction(
             npoint=256, radius=0.2, nsample=32,
-            in_channel=64 + 3, mlp=[64, 64, 128]
+            in_channel=67, mlp=[64, 64, 128]  # 64 (points) + 3 (xyz_norm)
         )
         self.sa3 = PointNetSetAbstraction(
             npoint=64, radius=0.4, nsample=32,
-            in_channel=128 + 3, mlp=[128, 128, 256]
+            in_channel=131, mlp=[128, 128, 256]  # 128 (points) + 3 (xyz_norm)
         )
         self.sa4 = PointNetSetAbstraction(
             npoint=16, radius=0.8, nsample=32,
-            in_channel=256 + 3, mlp=[256, 256, 512]
+            in_channel=259, mlp=[256, 256, 512]  # 256 (points) + 3 (xyz_norm)
         )
         
         # Decoder (Feature Propagation Layers)

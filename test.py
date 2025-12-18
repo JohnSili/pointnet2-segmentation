@@ -120,7 +120,7 @@ def main():
     model = PointNet2Seg(num_classes=args.num_classes, num_points=args.num_points).to(device)
     
     # Загружаем веса
-    checkpoint = torch.load(args.checkpoint, map_location=device)
+    checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=False)
     model.load_state_dict(checkpoint['model_state_dict'])
     print(f'Loaded checkpoint from epoch {checkpoint["epoch"]}')
     if 'best_iou' in checkpoint:

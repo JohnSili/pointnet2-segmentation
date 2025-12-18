@@ -249,11 +249,16 @@ PointNet++ состоит из двух основных компонентов:
 
 **[Откройте в Colab](https://colab.research.google.com/github/JohnSili/pointnet2-segmentation/blob/main/colab_setup.ipynb)**
 
+**Данные уже включены в репозиторий!** (500 PLY файлов, 38MB)
+
+Просто откройте ноутбук и выполните ячейки - все настроено автоматически.
+
 Или клонируйте репозиторий:
 ```python
 !git clone https://github.com/JohnSili/pointnet2-segmentation.git
 %cd pointnet2-segmentation
 %pip install torch torchvision numpy scikit-learn tqdm matplotlib tensorboard -q
+# Данные автоматически распакуются из data_for_colab.zip
 ```
 
 **Подробные инструкции:**

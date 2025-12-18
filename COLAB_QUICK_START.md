@@ -48,25 +48,19 @@ Runtime → Change runtime type → Hardware accelerator → GPU
     --device cuda
 ```
 
-## Загрузка ваших данных в Colab:
+## Данные уже включены в репозиторий! ✅
 
-### Шаг 1: Создайте архив локально
+**Архив `data_for_colab.zip` (38MB, 500 PLY файлов) уже в репозитории.**
 
-```bash
-cd /home/danil/Documents/GDEM
-./prepare_data_for_colab.sh
-# Или: zip -r data_for_colab.zip 3011-20251217T195928Z-1-001
-```
+Ноутбук автоматически распакует данные при клонировании. Просто выполните ячейки по порядку!
 
-### Шаг 2: Загрузите в Colab
-
-В ноутбуке `colab_setup.ipynb` уже есть ячейка для загрузки. Или вручную:
+### Если нужно загрузить свои данные:
 
 ```python
 from google.colab import files
 import zipfile
 
-# Загрузите архив data_for_colab.zip
+# Загрузите свой архив
 uploaded = files.upload()
 
 # Распакуйте
@@ -75,20 +69,6 @@ for filename in uploaded.keys():
         with zipfile.ZipFile(filename, 'r') as zip_ref:
             zip_ref.extractall('.')
         print(f"✓ Данные распакованы!")
-```
-
-### Шаг 3: Запустите обучение
-
-Ноутбук автоматически определит наличие данных и использует их:
-
-```python
-!python train.py \
-    --data_dir 3011-20251217T195928Z-1-001 \
-    --area 3011 \
-    --num_points 2048 \
-    --batch_size 8 \
-    --epochs 50 \
-    --device cuda
 ```
 
 **Подробная инструкция:** [DATA_UPLOAD.md](DATA_UPLOAD.md)

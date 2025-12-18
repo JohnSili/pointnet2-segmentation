@@ -37,23 +37,28 @@ class S3DISDataset(Dataset):
         # Загружаем все файлы из указанной области
         self.file_paths = self._load_file_paths()
         
-        # Разделяем на train/val/test
-        train_files, temp_files = train_test_split(
-            self.file_paths, test_size=(test_size + val_size), random_state=42
-        )
-        val_size_adjusted = val_size / (test_size + val_size)
-        val_files, test_files = train_test_split(
-            temp_files, test_size=(1 - val_size_adjusted), random_state=42
-        )
-        
-        if split == 'train':
-            self.file_paths = train_files
-        elif split == 'val':
-            self.file_paths = val_files
+        # Разделяем на train/val/test только если есть файлы
+        if len(self.file_paths) > 0:
+            train_files, temp_files = train_test_split(
+                self.file_paths, test_size=(test_size + val_size), random_state=42
+            )
+            val_size_adjusted = val_size / (test_size + val_size)
+            val_files, test_files = train_test_split(
+                temp_files, test_size=(1 - val_size_adjusted), random_state=42
+            )
+            
+            if split == 'train':
+                self.file_paths = train_files
+            elif split == 'val':
+                self.file_paths = val_files
+            else:
+                self.file_paths = test_files
+            
+            print(f"Loaded {len(self.file_paths)} files for {split} split")
         else:
-            self.file_paths = test_files
-        
-        print(f"Loaded {len(self.file_paths)} files for {split} split")
+            # Нет файлов - будем использовать синтетические данные
+            self.file_paths = []
+            print(f"No files found. Will use synthetic data for {split} split")
     
     def _load_file_paths(self):
         """Загружает пути к файлам данных"""

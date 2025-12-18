@@ -81,6 +81,7 @@ def main():
     parser.add_argument('--area', type=str, default='Area_1', help='Area to use')
     parser.add_argument('--num_points', type=int, default=4096, help='Number of points per cloud')
     parser.add_argument('--checkpoint', type=str, required=True, help='Path to model checkpoint')
+    parser.add_argument('--num_classes', type=int, default=13, help='Number of classes')
     parser.add_argument('--num_samples', type=int, default=5, help='Number of samples to visualize')
     parser.add_argument('--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu', help='Device')
     parser.add_argument('--output_dir', type=str, default='./visualizations', help='Output directory')
@@ -103,7 +104,7 @@ def main():
     
     # Модель
     print('Loading model...')
-    model = PointNet2Seg(num_classes=13, num_points=args.num_points).to(device)
+    model = PointNet2Seg(num_classes=args.num_classes, num_points=args.num_points).to(device)
     checkpoint = torch.load(args.checkpoint, map_location=device)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
@@ -112,10 +113,18 @@ def main():
     
     for i in range(min(args.num_samples, len(test_dataset))):
         points, labels = test_dataset[i]
-        points_tensor = points.unsqueeze(0).to(device)
+        points_tensor = points.unsqueeze(0).to(device)  # [1, N, 6]
         
         with torch.no_grad():
-            logits = model(points_tensor)
+            # Передаем только XYZ и RGB, если есть
+            if points_tensor.shape[-1] == 6:
+                l0_xyz = points_tensor[:, :, :3]
+                l0_points = points_tensor[:, :, 3:]
+            else:
+                l0_xyz = points_tensor
+                l0_points = None
+            
+            logits = model(l0_xyz, l0_points)  # [1, N, num_classes]
             preds = logits.argmax(dim=-1).squeeze(0).cpu().numpy()
         
         points_np = points.numpy()

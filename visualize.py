@@ -116,15 +116,8 @@ def main():
         points_tensor = points.unsqueeze(0).to(device)  # [1, N, 6]
         
         with torch.no_grad():
-            # Передаем только XYZ и RGB, если есть
-            if points_tensor.shape[-1] == 6:
-                l0_xyz = points_tensor[:, :, :3]
-                l0_points = points_tensor[:, :, 3:]
-            else:
-                l0_xyz = points_tensor
-                l0_points = None
-            
-            logits = model(l0_xyz, l0_points)  # [1, N, num_classes]
+            # Модель принимает один аргумент [B, N, 6] где 6 = (x, y, z, r, g, b)
+            logits = model(points_tensor)  # [1, N, num_classes]
             preds = logits.argmax(dim=-1).squeeze(0).cpu().numpy()
         
         points_np = points.numpy()

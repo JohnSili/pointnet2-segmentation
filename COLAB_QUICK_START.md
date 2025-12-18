@@ -50,18 +50,38 @@ Runtime → Change runtime type → Hardware accelerator → GPU
 
 ## Загрузка ваших данных в Colab:
 
+### Шаг 1: Создайте архив локально
+
+```bash
+cd /home/danil/Documents/GDEM
+./prepare_data_for_colab.sh
+# Или: zip -r data_for_colab.zip 3011-20251217T195928Z-1-001
+```
+
+### Шаг 2: Загрузите в Colab
+
+В ноутбуке `colab_setup.ipynb` уже есть ячейка для загрузки. Или вручную:
+
 ```python
 from google.colab import files
 import zipfile
 
-# Загрузите архив с PLY файлами
+# Загрузите архив data_for_colab.zip
 uploaded = files.upload()
 
 # Распакуйте
-with zipfile.ZipFile('data.zip', 'r') as zip_ref:
-    zip_ref.extractall('.')
+for filename in uploaded.keys():
+    if filename.endswith('.zip'):
+        with zipfile.ZipFile(filename, 'r') as zip_ref:
+            zip_ref.extractall('.')
+        print(f"✓ Данные распакованы!")
+```
 
-# Затем используйте:
+### Шаг 3: Запустите обучение
+
+Ноутбук автоматически определит наличие данных и использует их:
+
+```python
 !python train.py \
     --data_dir 3011-20251217T195928Z-1-001 \
     --area 3011 \
@@ -70,6 +90,8 @@ with zipfile.ZipFile('data.zip', 'r') as zip_ref:
     --epochs 50 \
     --device cuda
 ```
+
+**Подробная инструкция:** [DATA_UPLOAD.md](DATA_UPLOAD.md)
 
 ## Мониторинг обучения:
 

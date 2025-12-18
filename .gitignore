@@ -20,9 +20,14 @@ visualizations/
 
 # Data
 data/
+# Исключаем PLY файлы, но разрешаем архив данных
 *.ply
+!data_for_colab.zip
 *.txt
 *.npy
+# Исключаем исходные данные, но разрешаем архив
+3011-20251217T195928Z-1-001/
+!data_for_colab.zip
 
 # IDE
 .vscode/

@@ -45,11 +45,12 @@ def train_epoch(model, train_loader, criterion, optimizer, device, epoch, writer
         total_points += labels.size(0)
         total_loss += loss.item()
         
-        # Обновляем прогресс-бар
-        pbar.set_postfix({
-            'loss': f'{loss.item():.4f}',
-            'acc': f'{100.0 * total_correct / total_points:.2f}%'
-        })
+        # Обновляем прогресс-бар (упрощенный вывод)
+        if batch_idx % 50 == 0:
+            pbar.set_postfix({
+                'loss': f'{loss.item():.4f}',
+                'acc': f'{100.0 * total_correct / total_points:.1f}%'
+            })
         
         # Логируем в TensorBoard
         global_step = epoch * len(train_loader) + batch_idx
@@ -74,7 +75,7 @@ def validate(model, val_loader, criterion, device, num_classes):
     all_labels = []
     
     with torch.no_grad():
-        for points, labels in tqdm(val_loader, desc='Validation'):
+        for points, labels in tqdm(val_loader, desc='Val', leave=False):
             points = points.to(device)
             labels = labels.to(device)
             
@@ -125,10 +126,10 @@ def main():
     
     # Устройство
     device = torch.device(args.device)
-    print(f'Using device: {device}')
+    print(f'Устройство: {device}')
     
     # Датасеты
-    print('Loading datasets...')
+    print(f'\nЗагрузка данных из {args.data_dir}/{args.area}...')
     train_dataset = S3DISDataset(
         args.data_dir, area=args.area, split='train',
         num_points=args.num_points
@@ -148,9 +149,8 @@ def main():
     )
     
     # Модель
-    print('Initializing model...')
     model = PointNet2Seg(num_classes=args.num_classes, num_points=args.num_points).to(device)
-    print(f'Model parameters: {sum(p.numel() for p in model.parameters()):,}')
+    print(f'Параметров модели: {sum(p.numel() for p in model.parameters()):,}')
     
     # Функция потерь с весами классов (для дисбаланса)
     # Вычисляем веса на основе частоты классов в обучающей выборке
@@ -168,12 +168,10 @@ def main():
     
     # Обучение
     best_iou = 0.0
-    print('Starting training...')
+    print(f'\nНачало обучения: {args.epochs} эпох, batch_size={args.batch_size}, lr={args.lr}')
+    print('=' * 70)
     
     for epoch in range(1, args.epochs + 1):
-        print(f'\nEpoch {epoch}/{args.epochs}')
-        print('-' * 50)
-        
         # Обучение
         train_loss, train_acc = train_epoch(
             model, train_loader, criterion, optimizer, device, epoch, writer
@@ -188,7 +186,7 @@ def main():
         scheduler.step()
         current_lr = optimizer.param_groups[0]['lr']
         
-        # Логируем
+        # Логируем в TensorBoard
         writer.add_scalar('Epoch/Train_Loss', train_loss, epoch)
         writer.add_scalar('Epoch/Train_Accuracy', train_acc, epoch)
         writer.add_scalar('Epoch/Val_Loss', val_loss, epoch)
@@ -196,9 +194,12 @@ def main():
         writer.add_scalar('Epoch/Val_IoU', val_iou, epoch)
         writer.add_scalar('Epoch/Learning_Rate', current_lr, epoch)
         
-        print(f'Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.2f}%')
-        print(f'Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.2f}%, Val IoU: {val_iou:.4f}')
-        print(f'Learning Rate: {current_lr:.6f}')
+        # Компактный вывод
+        status = f"Epoch {epoch:3d}/{args.epochs} | "
+        status += f"Train: Loss={train_loss:.4f} Acc={train_acc:.2f}% | "
+        status += f"Val: Loss={val_loss:.4f} Acc={val_acc:.2f}% IoU={val_iou:.4f} | "
+        status += f"LR={current_lr:.6f}"
+        print(status)
         
         # Сохраняем лучшую модель
         if val_iou > best_iou:
@@ -212,7 +213,7 @@ def main():
                 'val_acc': val_acc,
             }
             torch.save(checkpoint, os.path.join(args.save_dir, 'best_model.pth'))
-            print(f'✓ Saved best model (IoU: {best_iou:.4f})')
+            print(f"  ✓ Сохранена лучшая модель (IoU: {best_iou:.4f})")
         
         # Сохраняем последнюю модель
         checkpoint = {
@@ -226,8 +227,8 @@ def main():
         torch.save(checkpoint, os.path.join(args.save_dir, 'last_model.pth'))
     
     writer.close()
-    print('\nTraining completed!')
-    print(f'Best IoU: {best_iou:.4f}')
+    print('=' * 70)
+    print(f'Обучение завершено! Лучший IoU: {best_iou:.4f}')
 
 
 if __name__ == '__main__':

@@ -37,28 +37,30 @@ class S3DISDataset(Dataset):
         # Загружаем все файлы из указанной области
         self.file_paths = self._load_file_paths()
         
-        # Разделяем на train/val/test только если есть файлы
-        if len(self.file_paths) > 0:
-            train_files, temp_files = train_test_split(
-                self.file_paths, test_size=(test_size + val_size), random_state=42
+        # Проверяем наличие файлов
+        if len(self.file_paths) == 0:
+            raise ValueError(
+                f"Не найдено файлов данных в {os.path.join(data_dir, area)}. "
+                f"Убедитесь, что данные загружены и распакованы."
             )
-            val_size_adjusted = val_size / (test_size + val_size)
-            val_files, test_files = train_test_split(
-                temp_files, test_size=(1 - val_size_adjusted), random_state=42
-            )
-            
-            if split == 'train':
-                self.file_paths = train_files
-            elif split == 'val':
-                self.file_paths = val_files
-            else:
-                self.file_paths = test_files
-            
-            print(f"Loaded {len(self.file_paths)} files for {split} split")
+        
+        # Разделяем на train/val/test
+        train_files, temp_files = train_test_split(
+            self.file_paths, test_size=(test_size + val_size), random_state=42
+        )
+        val_size_adjusted = val_size / (test_size + val_size)
+        val_files, test_files = train_test_split(
+            temp_files, test_size=(1 - val_size_adjusted), random_state=42
+        )
+        
+        if split == 'train':
+            self.file_paths = train_files
+        elif split == 'val':
+            self.file_paths = val_files
         else:
-            # Нет файлов - будем использовать синтетические данные
-            self.file_paths = []
-            print(f"No files found. Will use synthetic data for {split} split")
+            self.file_paths = test_files
+        
+        print(f"✓ {split}: {len(self.file_paths)} файлов")
     
     def _load_file_paths(self):
         """Загружает пути к файлам данных"""
@@ -66,8 +68,6 @@ class S3DISDataset(Dataset):
         area_path = os.path.join(self.data_dir, self.area)
         
         if not os.path.exists(area_path):
-            # Если директория не существует, создаем примерные данные
-            print(f"Warning: {area_path} does not exist. Will use synthetic data.")
             return []
         
         # Ищем все файлы с облаками точек (.txt, .npy, .ply)
@@ -76,7 +76,7 @@ class S3DISDataset(Dataset):
                 if file.endswith('.txt') or file.endswith('.npy') or file.endswith('.ply'):
                     file_paths.append(os.path.join(root, file))
         
-        return file_paths
+        return sorted(file_paths)  # Сортируем для воспроизводимости
     
     def _load_point_cloud(self, file_path):
         """
@@ -91,9 +91,9 @@ class S3DISDataset(Dataset):
             # Читаем из текстового файла
             data = np.loadtxt(file_path)
         
-        # Если данных нет, создаем синтетические
+        # Проверяем наличие данных
         if len(data) == 0:
-            return self._generate_synthetic_data()
+            raise ValueError(f"Файл {file_path} пуст или поврежден")
         
         # Проверяем формат данных
         if data.shape[1] >= 7:
@@ -210,24 +210,7 @@ class S3DISDataset(Dataset):
             
             return points, labels
         except Exception as e:
-            print(f"Error loading PLY file {file_path}: {e}")
-            return self._generate_synthetic_data()
-    
-    def _generate_synthetic_data(self):
-        """Генерирует синтетические данные для тестирования"""
-        n_points = np.random.randint(1000, 10000)
-        
-        # Генерируем случайные точки в кубе
-        points = np.random.rand(n_points, 3) * 10 - 5
-        
-        # Генерируем случайные цвета
-        colors = np.random.randint(0, 255, (n_points, 3))
-        points = np.concatenate([points, colors], axis=1)
-        
-        # Генерируем случайные метки (13 классов для S3DIS)
-        labels = np.random.randint(0, 13, n_points)
-        
-        return points, labels
+            raise ValueError(f"Ошибка загрузки PLY файла {file_path}: {e}")
     
     def _sample_points(self, points, labels, num_points):
         """Выбирает num_points точек из облака"""
@@ -241,18 +224,11 @@ class S3DISDataset(Dataset):
             return points[indices], labels[indices]
     
     def __len__(self):
-        if len(self.file_paths) == 0:
-            # Возвращаем фиксированное количество синтетических примеров
-            return 100
         return len(self.file_paths)
     
     def __getitem__(self, idx):
-        if len(self.file_paths) == 0:
-            # Генерируем синтетические данные
-            points, labels = self._generate_synthetic_data()
-        else:
-            file_path = self.file_paths[idx]
-            points, labels = self._load_point_cloud(file_path)
+        file_path = self.file_paths[idx]
+        points, labels = self._load_point_cloud(file_path)
         
         # Выбираем фиксированное количество точек
         points, labels = self._sample_points(points, labels, self.num_points)

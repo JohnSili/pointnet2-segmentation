@@ -42,8 +42,6 @@ venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 ```
 
-**Примечание:** Open3D опциональна (не поддерживает Python 3.13), но код работает без неё.
-
 ## Структура проекта
 
 ```

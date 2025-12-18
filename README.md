@@ -245,16 +245,20 @@ PointNet++ состоит из двух основных компонентов:
 
 Проект можно запустить в Google Colab для использования бесплатного GPU:
 
-1. Откройте `colab_setup.ipynb` в Google Colab
-2. Или клонируйте репозиторий:
-   ```python
-   !git clone https://github.com/yourusername/pointnet2-segmentation.git
-   %cd pointnet2-segmentation
-   !pip install -r requirements.txt
-   ```
-3. Следуйте инструкциям в `COLAB.md`
+### 🚀 Быстрый старт
 
-Подробная инструкция: [COLAB.md](COLAB.md)
+**[Откройте в Colab](https://colab.research.google.com/github/JohnSili/pointnet2-segmentation/blob/main/colab_setup.ipynb)**
+
+Или клонируйте репозиторий:
+```python
+!git clone https://github.com/JohnSili/pointnet2-segmentation.git
+%cd pointnet2-segmentation
+%pip install torch torchvision numpy scikit-learn tqdm matplotlib tensorboard -q
+```
+
+**Подробные инструкции:**
+- [COLAB_QUICK_START.md](COLAB_QUICK_START.md) - Быстрый старт
+- [COLAB.md](COLAB.md) - Полная инструкция
 
 ## Загрузка на GitHub
 
